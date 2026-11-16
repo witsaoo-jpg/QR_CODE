@@ -9,6 +9,7 @@ function notify(message, ok = false) {
 }
 function clearPreview() {
   qr = null;
+  $("payloadPreview").hidden = true;
   $("qr").replaceChildren();
   $("placeholder").hidden = false;
   $("png").disabled = $("svg").disabled = true;
@@ -21,7 +22,7 @@ function luminance(hex) {
 }
 function generate(showError = false) {
   clearTimeout(timer);
-  const data = $("data").value.trim(), size = Number($("size").value);
+  let data = $("data").value.trim(); const size = Number($("size").value);
   const foreground = $("foreground").value, background = $("background").value;
   $("fgValue").textContent = foreground;
   $("bgValue").textContent = background;
@@ -29,7 +30,7 @@ function generate(showError = false) {
   function fail(message) { clearPreview(); notify(message); }
   if (!data) { clearPreview(); notify(showError ? "กรุณากรอก URL หรือข้อความ" : ""); return; }
   if ($("kind").value === "url") {
-    try { const url = new URL(data); if (!["http:","https:"].includes(url.protocol) || !url.hostname) throw Error(); }
+    try { const url = new URL(data); if (!["http:","https:"].includes(url.protocol) || !url.hostname) throw Error(); data = url.href; }
     catch { return fail("กรุณากรอก URL ที่ขึ้นต้นด้วย https:// หรือ http://"); }
   }
   if ((luminance(background)+.05)/(luminance(foreground)+.05) < 4.5)
@@ -38,20 +39,27 @@ function generate(showError = false) {
   // ใช้ระดับแก้ไขข้อผิดพลาด H และเว้นขอบเพื่อช่วยให้สแกนง่าย
   try {
     const next = new QRCodeStyling({
-      width:size, height:size, type:"svg", data,
+      width:size, height:size, type:"svg",
+      // ไลบรารี 1.6.0 อ่าน byte จาก charCode; แปลง Unicode เป็น UTF-8 ก่อนส่ง
+      data: String.fromCharCode(...new TextEncoder().encode(data)),
       margin:Math.ceil(size*.10),
-      qrOptions:{errorCorrectionLevel:"H"},
+      qrOptions:{errorCorrectionLevel:"H",mode:"Byte"},
       dotsOptions:{color:foreground,type:"square"},
       cornersSquareOptions:{color:foreground,type:"square"},
       cornersDotOptions:{color:foreground,type:"square"},
       backgroundOptions:{color:background},
-      ...(logoData ? {image:logoData,imageOptions:{hideBackgroundDots:true,imageSize:.20,margin:4,saveAsBlob:true}} : {})
+      ...(logoData ? {image:logoData,imageOptions:{hideBackgroundDots:true,imageSize:.15,margin:4,saveAsBlob:true}} : {})
     });
     $("qr").replaceChildren();
     next.append($("qr"));
+    // กำหนด viewBox ให้ภาพย่อได้ครบทุกส่วนบนมือถือ
+    const svg = $("qr").querySelector("svg");
+    if (svg) svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+    $("payloadPreview").textContent = data;
+    $("payloadPreview").hidden = false;
     qr = next; $("placeholder").hidden = true;
     $("png").disabled = $("svg").disabled = false;
-    notify("สร้าง QR Code สำเร็จ",true);
+    notify("สร้าง QR Code สำเร็จ • พร้อมทดลองสแกน",true);
   } catch { fail("ไม่สามารถสร้าง QR Code ได้ กรุณาลดความยาวข้อความ"); }
 }
 function schedule() { clearTimeout(timer); clearPreview(); timer=setTimeout(()=>generate(),150); }
@@ -91,3 +99,20 @@ async function download(extension){
 $("png").addEventListener("click",()=>download("png"));
 $("svg").addEventListener("click",()=>download("svg"));
 generate();
+// PWA: ติดตั้งได้เมื่อเบราว์เซอร์รองรับ
+let installPrompt;
+window.addEventListener("beforeinstallprompt", event => {
+  event.preventDefault(); installPrompt=event; $("install").hidden=false;
+});
+$("install").addEventListener("click",async()=>{
+  if (!installPrompt) return;
+  await installPrompt.prompt(); installPrompt=null; $("install").hidden=true;
+});
+window.addEventListener("appinstalled",()=>{$("install").hidden=true;});
+if (/iPhone|iPad|iPod/i.test(navigator.userAgent) && !navigator.standalone) {
+  $("pwaHint").textContent="บน iPhone/iPad: เปิด Safari → แชร์ → เพิ่มไปยังหน้าจอโฮม";
+  $("pwaHint").hidden=false;
+}
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.warn));
+}
