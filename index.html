@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR Code Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script defer src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0/lib/qr-code-styling.js"></script>
+<script defer src="script.js"></script>
+</head>
+<body>
+<header><div class="brand"><span class="brand-icon" aria-hidden="true">▦</span><span>QR Code Generator</span></div><span class="tag">ฟรี • ใช้งานง่าย</span></header>
+<main>
+<section class="hero"><span class="eyebrow">YOUR DIGITAL TOOL</span><h1>สร้าง QR Code ในแบบของคุณ</h1><p>เปลี่ยนลิงก์หรือข้อความเป็น QR Code พร้อมปรับแต่งและดาวน์โหลดได้ทันที</p></section>
+<div class="workspace">
+<section class="card"><h2><span class="step">1</span> ตั้งค่า QR Code</h2>
+<form id="form" novalidate>
+<label for="kind">ประเภทข้อมูล</label><select id="kind"><option value="url">URL / ลิงก์เว็บไซต์</option><option value="text">ข้อความ</option></select>
+<label for="data">ข้อมูลที่ต้องการสร้าง <span class="required">*</span></label><textarea id="data" rows="3" placeholder="https://example.com" maxlength="1000" required></textarea>
+<label for="size">ขนาดภาพ</label><select id="size"><option value="256">256 × 256 px</option><option value="512" selected>512 × 512 px</option><option value="1024">1024 × 1024 px</option></select>
+<div class="colors"><div><label for="foreground">สี QR Code</label><div class="color-control"><input type="color" id="foreground" value="#123d72"><span id="fgValue">#123d72</span></div></div><div><label for="background">สีพื้นหลัง</label><div class="color-control"><input type="color" id="background" value="#ffffff"><span id="bgValue">#ffffff</span></div></div></div>
+<label for="logo">โลโก้ตรงกลาง (ไม่บังคับ)</label><input type="file" id="logo" accept="image/png,image/jpeg,image/webp"><small>PNG, JPG หรือ WebP ขนาดไม่เกิน 2 MB</small><button type="button" id="removeLogo" class="link" hidden>นำโลโก้ออก</button>
+<p id="message" role="status" aria-live="polite"></p>
+<div class="actions"><button class="primary" type="submit">▦ สร้าง QR Code</button><button class="secondary" type="reset">↻ ล้างข้อมูล</button></div>
+</form></section>
+<section class="card preview-card"><h2><span class="step">2</span> ตัวอย่าง QR Code</h2><div class="preview"><div id="placeholder"><span aria-hidden="true">▦</span><p>QR Code ของคุณจะแสดงที่นี่</p></div><div id="qr" aria-label="ตัวอย่าง QR Code"></div></div><p class="hint" id="dimension">512 × 512 px</p><div class="actions"><button id="png" class="primary" disabled>↓ PNG</button><button id="svg" class="secondary" disabled>↓ SVG</button></div><aside>แนะนำให้ใช้สีเข้มบนพื้นสว่าง และทดสอบสแกนก่อนนำไปใช้งานจริง</aside></section>
+</div>
+<p class="privacy">🔒 ข้อมูลและโลโก้ประมวลผลในเบราว์เซอร์ ไม่ส่งไปยังเซิร์ฟเวอร์ของแอป</p>
+</main><footer>Developed by QR Code Generator</footer>
+</body></html>
