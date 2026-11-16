@@ -33,6 +33,15 @@ function generate(showError = false) {
     try { const url = new URL(data); if (!["http:","https:"].includes(url.protocol) || !url.hostname) throw Error(); data = url.href; }
     catch { return fail("กรุณากรอก URL ที่ขึ้นต้นด้วย https:// หรือ http://"); }
   }
+  if ($("kind").value === "email") {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data)) return fail("กรุณากรอกอีเมลให้ถูกต้อง");
+    data = "mailto:" + data;
+  }
+  if (["phone","sms"].includes($("kind").value)) {
+    const number=data.replace(/[\s()-]/g,"");
+    if (!/^\+?[0-9]{5,15}$/.test(number)) return fail("กรุณากรอกหมายเลขโทรศัพท์ให้ถูกต้อง");
+    data = ($("kind").value === "phone" ? "tel:" : "sms:") + number;
+  }
   if ((luminance(background)+.05)/(luminance(foreground)+.05) < 4.5)
     return fail("กรุณาเลือกสี QR Code เข้มและพื้นหลังสว่าง ให้มีความต่างของสีเพียงพอ");
   if (typeof QRCodeStyling !== "function") return fail("โหลดไลบรารีไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วรีเฟรช");
@@ -64,7 +73,7 @@ function generate(showError = false) {
 }
 function schedule() { clearTimeout(timer); clearPreview(); timer=setTimeout(()=>generate(),150); }
 controls.forEach(id=>$(id).addEventListener("input",()=>{
-  if(id==="kind") $("data").placeholder=$("kind").value==="url"?"https://example.com":"พิมพ์ข้อความที่ต้องการ";
+  if(id==="kind") syncKind();
   schedule();
 }));
 form.addEventListener("submit",e=>{e.preventDefault();generate(true);});
@@ -89,7 +98,7 @@ $("logo").addEventListener("change",()=>{
   reader.readAsDataURL(file);
 });
 $("removeLogo").addEventListener("click",()=>{logoVersion++;logoData="";$("logo").value="";$("removeLogo").hidden=true;generate();});
-form.addEventListener("reset",()=>{logoVersion++;logoData="";clearTimeout(timer);$("removeLogo").hidden=true;setTimeout(()=>{$("data").placeholder="https://example.com";generate();},0);});
+form.addEventListener("reset",()=>{logoVersion++;logoData="";clearTimeout(timer);$("removeLogo").hidden=true;setTimeout(()=>{syncKind();syncPreset();generate();},0);});
 async function download(extension){
   if(!qr)return;
   const current=qr;
@@ -116,3 +125,23 @@ if (/iPhone|iPad|iPod/i.test(navigator.userAgent) && !navigator.standalone) {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.warn));
 }
+// เมนูประเภทและตัวอย่างสี
+const kinds={
+ url:["เชื่อมโยงไปยังเว็บไซต์","กรอก URL เว็บไซต์","https://example.com","ตัวอย่าง: https://example.com/"],
+ text:["สร้าง QR Code จากข้อความ","กรอกข้อความ","พิมพ์ข้อความภาษาไทยหรือภาษาอังกฤษ","เมื่อสแกนจะแสดงข้อความที่กรอก"],
+ email:["เปิดแอปอีเมล","กรอกอีเมล","name@example.com","เมื่อสแกนจะเปิดแอปอีเมล"],
+ phone:["โทรออกจาก QR Code","กรอกหมายเลขโทรศัพท์","0812345678","เมื่อสแกนจะเปิดหน้าจอโทรศัพท์"],
+ sms:["ส่งข้อความ SMS","กรอกหมายเลขโทรศัพท์","0812345678","เมื่อสแกนจะเปิดแอปส่งข้อความ"]
+};
+function syncKind(){
+ const [heading,label,placeholder,hint]=kinds[$("kind").value];
+ $("kindHeading").textContent=heading;$("dataLabel").textContent=label;$("data").placeholder=placeholder;$("kindHint").textContent=hint;
+ document.querySelectorAll("[data-kind]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.kind===$("kind").value)));
+}
+document.querySelectorAll("[data-kind]").forEach(b=>b.addEventListener("click",()=>{
+ if($("kind").value!==b.dataset.kind){$("kind").value=b.dataset.kind;$("data").value="";syncKind();generate();$("data").focus();}
+}));
+function syncPreset(){document.querySelectorAll("[data-color]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.color===$("foreground").value&&$("background").value==="#ffffff")));}
+document.querySelectorAll("[data-color]").forEach(b=>b.addEventListener("click",()=>{$("foreground").value=b.dataset.color;$("background").value="#ffffff";syncPreset();generate();}));
+$("foreground").addEventListener("input",syncPreset);$("background").addEventListener("input",syncPreset);
+syncKind();syncPreset();
