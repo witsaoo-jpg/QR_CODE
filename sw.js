@@ -1,6 +1,6 @@
 // Offline cache สำหรับไฟล์ของแอปและไลบรารีที่กำหนดไว้
-const CACHE="qr-generator-v2.0.1";
-const ROOT=["./","./index.html","./style.css?v=2","./script.js?v=2","./manifest.webmanifest","./icon.svg"];
+const CACHE="qr-generator-v3.0.0";
+const ROOT=["./","./index.html","./style.css?v=3","./script.js?v=3","./manifest.webmanifest","./icon.svg"];
 const EXTERNAL=["https://cdn.tailwindcss.com/3.4.17","https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0/lib/qr-code-styling.js"];
 self.addEventListener("install",event=>event.waitUntil((async()=>{
  const cache=await caches.open(CACHE);await cache.addAll(ROOT);
